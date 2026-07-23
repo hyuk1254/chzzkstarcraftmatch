@@ -315,7 +315,22 @@
                             else race = '랜덤';
                         }
 
-                        return { name, race, img, winrate };
+                        // ✨ 깃허브 하이브리드 이미지 자동 매칭 로직 ✨
+                        // 구글 시트에 이미지 주소가 비어있을 경우, 깃허브 Raw 주소와 선수/맵 이름을 자동 결합합니다.
+                        let cleanName = name ? name.trim() : '';
+                        let finalImg = img ? img.trim() : '';
+
+                        if (!finalImg && cleanName) {
+                            if (type === 'player') {
+                                // 선수 사진 기본 확장자 설정: .png
+                                finalImg = `https://raw.githubusercontent.com/ChzzkHarm0ny/SZD/refs/heads/main/images/${encodeURIComponent(cleanName)}.png`;
+                            } else if (type === 'map') {
+                                // 맵 이미지 기본 확장자 설정: .webp
+                                finalImg = `https://raw.githubusercontent.com/ChzzkHarm0ny/SZD/refs/heads/main/maps/${encodeURIComponent(cleanName)}.webp`;
+                            }
+                        }
+
+                        return { name: cleanName, race, img: finalImg, winrate };
                     }).filter(item => {
                         if (!item.name) return false;
 
