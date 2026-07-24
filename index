@@ -136,6 +136,7 @@
                 showStats: true,
                 fullscreenOverlay: false,
                 poolLayout: 'grid',
+                bc: null,
 
                 mockPlayers: [
                     { name: "Flash (이영호)", race: "테란", img: "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=400", winrate: "전 승률 74.2% (vs Z 71%, vs P 78%)" },
@@ -198,6 +199,15 @@
                             this.fullscreenOverlay = false;
                         }
                     });
+
+                    // ✨ OBS 실시간 0초 동기화 채널 설정
+                    const bc = new BroadcastChannel('sc_chzzk_sync_channel');
+                    bc.onmessage = (event) => {
+                        if (event.data === 'update') {
+                            this.loadState();
+                        }
+                    };
+                    this.bc = bc;
                 },
 
                 triggerToast(message) {
@@ -315,18 +325,14 @@
                             else race = '랜덤';
                         }
 
-                        // ✨ 깃허브 하이브리드 이미지 자동 매칭 로직 ✨
-                        // 구글 시트에 이미지 주소가 비어있을 경우, 깃허브 Raw 주소와 선수/맵 이름을 자동 결합합니다.
                         let cleanName = name ? name.trim() : '';
                         let finalImg = img ? img.trim() : '';
 
                         if (!finalImg && cleanName) {
                             if (type === 'player') {
-                                // 선수 사진 기본 확장자 설정: .png
                                 finalImg = `https://raw.githubusercontent.com/ChzzkHarm0ny/SZD/refs/heads/main/images/${encodeURIComponent(cleanName)}.png`;
                             } else if (type === 'map') {
-                                // 맵 이미지 기본 확장자 설정: .png
-                                finalImg = `https://raw.githubusercontent.com/ChzzkHarm0ny/SZD/refs/heads/main/maps/${encodeURIComponent(cleanName)}.webp`;
+                                finalImg = `https://raw.githubusercontent.com/ChzzkHarm0ny/SZD/refs/heads/main/maps/${encodeURIComponent(cleanName)}.png`;
                             }
                         }
 
@@ -425,6 +431,11 @@
                         poolLayout: this.poolLayout
                     };
                     localStorage.setItem('sc_chzzk_dashboard_state', JSON.stringify(backup));
+                    
+                    // ✨ 상태 변경 시 다른 창(OBS 브라우저 소스)으로 즉시 전송
+                    if (this.bc) {
+                        this.bc.postMessage('update');
+                    }
                 },
 
                 loadState() {
